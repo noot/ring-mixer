@@ -2,16 +2,16 @@ pragma solidity ^0.4.24;
 
 contract RingVerify{
 
-	event Hash(bytes32 _h);
+    event Hash(bytes32 _h);
 
-	event Verify(bool ok);
+    event Verify(bool indexed ok);
 
-	function hash(uint256 _data) public returns (bytes32 _h) {
-		address _a = address(0x02);
+    function hash(uint256 _data) public returns (bytes32 _h) {
+        address _a = address(0x02);
 
-		assembly {            
+        assembly {            
             let x := mload(0x40) // get empty storage location
-            mstore ( x, _data ) /
+            mstore ( x, _data ) 
 
             let ret := call (gas, 
                 _a,
@@ -26,15 +26,14 @@ contract RingVerify{
             mstore(0x40, add(x,0x20)) // update free memory pointer
         }
 
-		emit Hash(_h);
-	}
+        emit Hash(_h);
+    }
 
-	function verify() public returns (bool ok) {
-		// precompile for verify located at address 0x09
-		address ver = address(0x09);
-		bytes _sig;
+    function verify(bytes _sig) public returns (bool ok) {
+        // precompile for verify located at address 0x09
+        address _a = address(0x09);
 
-		assembly {            
+        assembly {            
             let x := mload(0x40) // get empty storage location
             mstore ( x, _sig ) 
 
@@ -52,6 +51,6 @@ contract RingVerify{
         }
 
         emit Verify(ok);
-  	}
+    }
 
 }

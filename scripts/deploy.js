@@ -26,6 +26,8 @@ const deploy = async() => {
 
 	let results = path.resolve("./scripts/deployment.txt")
 	fs.writeFileSync(results, receipt.contractAddress)
+
+	return ringVerify
 }
 
-deploy()
+module.exports = {deploy}
