@@ -9,7 +9,7 @@ const deploy = async() => {
  	let walletJson = fs.readFileSync(keystore, 'utf8')
     let wallet = await Wallet.fromEncryptedJson(walletJson, "password")
 
-    let provider = new providers.JsonRpcProvider("http://localhost:8545", "homestead")
+    let provider = new providers.JsonRpcProvider("http://localhost:8545", "unspecified")
 
     wallet = wallet.connect(provider)
     
@@ -21,6 +21,11 @@ const deploy = async() => {
 
 	let ringVerifyFactory = new ethers.ContractFactory( abi , bin , wallet )
 	let ringVerify = await ringVerifyFactory.deploy()
+	let receipt = await provider.getTransactionReceipt(ringVerify.deployTransaction.hash)
+	console.log(receipt)
+
+	let results = path.resolve("./scripts/deployment.txt")
+	fs.writeFileSync(results, receipt.contractAddress)
 }
 
 deploy()
