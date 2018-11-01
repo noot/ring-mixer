@@ -2,13 +2,13 @@ pragma solidity ^0.4.24;
 
 contract RingMixer {
 	// constant ring size
-	uint8 constant SIZE = 12;
+	uint8 constant public SIZE = 12;
 
 	// constant signature length
-	uint8 constant SIGLEN = 32 * (SIZE * 3 + 2) + 8;
+	uint8 constant public SIGLEN = 32 * (SIZE * 3 + 2) + 8;
 
 	// constant ether value
-	uint256 constant VAL = 10 ** 17;
+	uint256 constant public VAL = 10 ** 17;
 
 	// point on elliptic curve representing a public key
 	struct PublicKey {
@@ -21,7 +21,7 @@ contract RingMixer {
 	PublicKey[] ring;
 
 	// array of hashes of already submitted signatures for the current ring
-	bytes[] sigs;
+	bytes[] public sigs;
 
 	event PublicKeySubmission(address _addr, bytes32 _x, bytes32 _y);
 	event RingFormed();
@@ -78,9 +78,10 @@ contract RingMixer {
 		}
 	} 
 
+	// 
 	function finish_round() internal returns (bool) {
 		for(uint8 i; i < SIZE; i++) {
-			// make sure the 
+			// make sure the signature is deleted and the transaction has been sent
 			require(sigs[i].length == 0);
 			delete ring[i];
 		}
