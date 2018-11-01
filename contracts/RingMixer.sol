@@ -10,10 +10,16 @@ contract RingMixer {
 	// constant ether value
 	uint256 constant public VAL = 10 ** 17;
 
+	// field order of secp256k1
+	uint256 constant internal ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
+
+	// b coefficient for curve secp256k1
+	uint256 constant internal B = 0x07;
+
 	// point on elliptic curve representing a public key
 	struct PublicKey {
-		bytes32 X;
-		bytes32 Y;
+		uint256 X;
+		uint256 Y;
 		address _addr;
 	}
 
@@ -23,7 +29,7 @@ contract RingMixer {
 	// array of hashes of already submitted signatures for the current ring
 	bytes[] public sigs;
 
-	event PublicKeySubmission(address _addr, bytes32 _x, bytes32 _y);
+	event PublicKeySubmission(address _addr, uint256 _x, uint256 _y);
 	event RingFormed();
 	event Transaction(address indexed _to, uint256 _value);
 	event RoundFinished();
@@ -31,10 +37,11 @@ contract RingMixer {
 	// round one: ring formation.
 	// sender submits their public key to the contract. once the ring size is reached, the RingFormed event is emitted
 	// called by the sender
-	function submit_key(bytes32 _x, bytes32 _y) public payable {
+	function submit_key(uint256 _x, uint256 _y) public payable {
 		require(msg.value == VAL);
 		require(_onCurve(_x, _y));
 		require(ring.length < SIZE);
+
 		PublicKey memory p = PublicKey(_x, _y, msg.sender);
 		ring.push(p);
 		emit PublicKeySubmission(msg.sender, _x, _y);
@@ -78,7 +85,7 @@ contract RingMixer {
 		}
 	} 
 
-	// 
+	// called when all the transactions for this round have been sent and the sigs array is empty
 	function finish_round() internal returns (bool) {
 		for(uint8 i; i < SIZE; i++) {
 			// make sure the signature is deleted and the transaction has been sent
@@ -94,7 +101,9 @@ contract RingMixer {
 	}
 
 	// todo: checks if the point is on the curve
-	function _onCurve(bytes32 _x, bytes32 _y) internal returns (bool) {
-		return true;
+	function _onCurve(uint256 _x, uint256 _y) internal returns (bool) {
+		uint256 sqred = mulmod(_x, _x, ORDER);
+		uint256 cubed = mulmod(sqred, _x, ORDER);
+		return addmod(sqred, B, ORDER) == mulmod(_y, _y, ORDER);
 	}
 }
