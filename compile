@@ -1,0 +1,2 @@
+solc --abi contracts/RingVerify.sol -o build/ --overwrite
+solc --bin contracts/RingVerify.sol -o build/ --overwrite
