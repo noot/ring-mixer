@@ -21,8 +21,9 @@ const deploy = async() => {
 
 	let ringVerifyFactory = new ethers.ContractFactory( abi , bin , wallet )
 	let ringVerify = await ringVerifyFactory.deploy()
+	await provider.waitForTransaction(ringVerify.deployTransaction.hash)
 	let receipt = await provider.getTransactionReceipt(ringVerify.deployTransaction.hash)
-	console.log(receipt)
+	console.log("RingVerify deployed")
 
 	let results = path.resolve("./scripts/deployment.txt")
 	fs.writeFileSync(results, receipt.contractAddress)
