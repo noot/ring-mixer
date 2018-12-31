@@ -1,6 +1,8 @@
 pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;
 
+// ring verification using bn256 precompiles
+// in progress
 contract Verify {
 	struct Point {
 		int256 x;

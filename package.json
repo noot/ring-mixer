@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/noot/ring-mixer#readme",
   "dependencies": {
-    "ethers": "^4.0.7"
+    "chai": "^4.2.0",
+    "ethers": "^4.0.7",
+    "mocha": "^5.2.0"
   }
 }

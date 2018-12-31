@@ -4,7 +4,7 @@ const providers = ethers.providers
 const path = require("path")
 const fs = require("fs")
 
-const deploy = async() => {
+const deployRingVerify = async() => {
 	let keystore = path.resolve("./keystore/UTC--2018-05-17T21-58-52.188632298Z--8f9b540b19520f8259115a90e4b4ffaeac642a30")
  	let walletJson = fs.readFileSync(keystore, 'utf8')
     let wallet = await Wallet.fromEncryptedJson(walletJson, "password")
@@ -31,4 +31,31 @@ const deploy = async() => {
 	return ringVerify
 }
 
-module.exports = {deploy}
+const deployRingMixer = async() => {
+	let keystore = path.resolve("./keystore/UTC--2018-05-17T21-58-52.188632298Z--8f9b540b19520f8259115a90e4b4ffaeac642a30")
+ 	let walletJson = fs.readFileSync(keystore, 'utf8')
+    let wallet = await Wallet.fromEncryptedJson(walletJson, "password")
+
+    let provider = new providers.JsonRpcProvider("http://localhost:8545", "unspecified")
+
+    wallet = wallet.connect(provider)
+    
+	let RingMixerAbi = path.resolve("./build/RingMixer.abi")
+ 	let abi = fs.readFileSync(RingVerifyAbi, 'utf8')
+
+	let RingMixerBin = path.resolve("./build/RingMixer.bin")
+ 	let bin = fs.readFileSync(RingVerifyBin, 'utf8')
+
+	let RingMixerFactory = new ethers.ContractFactory( abi , bin , wallet )
+	let RingMixer = await ringVerifyFactory.deploy()
+	await provider.waitForTransaction(RingMixer.deployTransaction.hash)
+	let receipt = await provider.getTransactionReceipt(RingMixer.deployTransaction.hash)
+	console.log("RingMixer deployed")
+
+	let results = path.resolve("./scripts/deployment.txt")
+	fs.writeFileSync(results, receipt.contractAddress)
+
+	return RingMixer
+}
+
+module.exports = {deployRingVerify, deployRingMixer}
