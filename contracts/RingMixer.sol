@@ -32,8 +32,9 @@ contract RingMixer {
 	bytes[] public sigs;
 
 	event PublicKeySubmission(address _addr, uint256 _x, uint256 _y);
-	event RingFormed();
+	event DepositsCompleted();
 	event Transaction(address indexed _to, uint256 _value);
+	event WithdrawalsCompleted();
 	event RoundFinished();
     event Verify(bool indexed ok);
 
@@ -51,24 +52,9 @@ contract RingMixer {
 		emit PublicKeySubmission(msg.sender, _x, _y);
 
 		if(ring.length == SIZE) {
-			emit RingFormed();
+			emit DepositsCompleted();
 		}
 	}
-
-	// round two: signature submission
-	// after a ring is formed, all the members of the ring must submit a ring-signed transaction where the message
-	// is keccak256(address _to, uint256 _value). this signature is stored in the contract until withdrawals are completed
-	// called by the sender
-	// function submit_sig(bytes memory _sig) public {
-	// 	require(_sig.length == SIGLEN);
-	// 	require(sigs.length < SIZE);
-	// 	// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
-	// 	// the ring stored in the contract
-	// 	sigs.push(_sig);
-	// 	if (sigs.length == SIZE) {
-	// 		emit RoundFinished();
-	// 	}
-	// }
 
 	// round two: verification and withdrawal
 	// verifies that there was in fact a signature submitted to the contract with a message specifying that _value be sent
@@ -83,7 +69,7 @@ contract RingMixer {
 		// instead of storing the entire signature, we can just store the key image stored inside _sig
 		sigs.push(_sig);
 		if (sigs.length == SIZE) {
-			emit RoundFinished();
+			emit WithdrawalsCompleted();
 		}
 
 		// require(!link(image, previous_images))

@@ -1,9 +1,8 @@
 # ring-mixer [wip]
 to eventually be renamed, once I find a good name :)
 
-
 contracts:
-* RingVerify.sol; this contract tests the ring-verify precompile located at address `0x0000000000000000000000000000000000000009`. see github.com/noot/go-ethereum
+* RingVerify.sol; this contract runs the ring-verify precompile located at address `0x0000000000000000000000000000000000000009`. see github.com/noot/go-ethereum
 * RingMixer.sol; this contract performs transaction obfuscation using verification of a ring-signed message.
 
 ### dependencies
@@ -16,13 +15,18 @@ git clone https://github.com/noot/ring-mixer
 npm install
 ```
 
-compile contracts: 
+compile contracts: `chmod +x compile.sh && ./compile.sh`
+
+alternatively,
 ```
 solc --abi contracts/* -o build/ --overwrite
 solc --bin contracts/* -o build/ --overwrite
 ```
 
-run test; you need a local ring-geth testnet running
+run tests; you need a local ring-geth testnet running. see github.com/noot/go-ethereum
 ```
-node test/verify_test.js
+mocha test/verify_test.js --timeout 20000
 ```
+
+### details and specifications
+see elizabeth.website/report.pdf

@@ -11,6 +11,7 @@ let ringVerify
 let provider
 let signer
 
+// mocha verify_test.js --timeout 20000
 describe("ring verify", () => {
 	before(async() => {
 		ringVerify = await deploy.deployRingVerify()
