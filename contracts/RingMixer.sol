@@ -61,9 +61,13 @@ contract RingMixer {
 	// called by the sender
 	function submit_sig(bytes memory _sig) public {
 		require(_sig.length == SIGLEN);
+		require(sigs.length < SIZE);
 		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
 		// the ring stored in the contract
 		sigs.push(_sig);
+		if (sigs.length == SIZE) {
+			emit RoundFinished();
+		}
 	}
 
 	// round three: verification and withdrawal
@@ -76,12 +80,13 @@ contract RingMixer {
 		bytes memory sig = sigs[i];
 
 		assembly {
+			// sig[8:40] is the message
 			sig_msg := mload(add(sig, 0x08))
 		}
 
 		require(sig_msg == _msg);
 
-		if(_verify(sigs[i])) {
+		if(_verify(sigs[i])) { // todo: implement LINK
 			_to.transfer(VAL);
 			emit Transaction(_to, VAL);
 
@@ -102,6 +107,7 @@ contract RingMixer {
 		emit RoundFinished();
 	}
 
+	// verify a ring signature
     function _verify(bytes memory _sig) internal returns (bool) {
         bool ok;
 

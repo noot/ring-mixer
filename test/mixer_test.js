@@ -21,4 +21,8 @@ const init = async() => {
 	console.log(receipt.logs[0].topics)
 }
 
-init()
+//init()
+
+describe("mixer", () => {
+	
+})
