@@ -4,7 +4,7 @@ import "./EC.sol";
 
 contract RingMixer {
 	// constant ring size
-	uint8 constant public SIZE = 5;
+	uint8 constant public SIZE = 11;
 
 	// constant signature length
 	uint8 constant public SIGLEN = 32 * (SIZE * 3 + 2) + 8;
@@ -41,7 +41,7 @@ contract RingMixer {
 	// sender submits their public key to the contract, as well as 0.1 ether.
 	// once the ring size is reached, the RingFormed event is emitted
 	// called by the sender
-	function submit_key(uint256 _x, uint256 _y) public payable {
+	function deposit(uint256 _x, uint256 _y) public payable {
 		require(msg.value == VAL);
 		require(_on_curve(_x, _y));
 		require(ring.length < SIZE);
@@ -59,38 +59,51 @@ contract RingMixer {
 	// after a ring is formed, all the members of the ring must submit a ring-signed transaction where the message
 	// is keccak256(address _to, uint256 _value). this signature is stored in the contract until withdrawals are completed
 	// called by the sender
-	function submit_sig(bytes memory _sig) public {
+	// function submit_sig(bytes memory _sig) public {
+	// 	require(_sig.length == SIGLEN);
+	// 	require(sigs.length < SIZE);
+	// 	// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
+	// 	// the ring stored in the contract
+	// 	sigs.push(_sig);
+	// 	if (sigs.length == SIZE) {
+	// 		emit RoundFinished();
+	// 	}
+	// }
+
+	// round two: verification and withdrawal
+	// verifies that there was in fact a signature submitted to the contract with a message specifying that _value be sent
+	// to _to.
+	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
+	function withdraw(address payable _to, bytes memory _sig) public returns (bool ok) {
 		require(_sig.length == SIGLEN);
 		require(sigs.length < SIZE);
 		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
 		// the ring stored in the contract
+
+		// instead of storing the entire signature, we can just store the key image stored inside _sig
 		sigs.push(_sig);
 		if (sigs.length == SIZE) {
 			emit RoundFinished();
 		}
-	}
 
-	// round three: verification and withdrawal
-	// verifies that there was in fact a signature submitted to the contract with a message specifying that _value be sent
-	// to _to.
-	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
-	function verify(address payable _to, uint8 i) public returns (bool ok) {
-		bytes32 _msg = keccak256(abi.encodePacked(_to, VAL));
+		// require(!link(image, previous_images))
+
+		bytes32 _msg = keccak256(abi.encodePacked(_to));
 		bytes32 sig_msg;
-		bytes memory sig = sigs[i];
 
 		assembly {
 			// sig[8:40] is the message
-			sig_msg := mload(add(sig, 0x08))
+			sig_msg := mload(add(_sig, 0x08))
 		}
 
+		// require that the signature actually signs the correct address
 		require(sig_msg == _msg);
 
-		if(_verify(sigs[i])) { // todo: implement LINK
+		// call ring_verify to verify the signature
+		// if it returns true, transfer the ether
+		if(ring_verify(_sig)) {
 			_to.transfer(VAL);
 			emit Transaction(_to, VAL);
-
-			delete sigs[i];
 			return true;
 		}
 
@@ -108,7 +121,7 @@ contract RingMixer {
 	}
 
 	// verify a ring signature
-    function _verify(bytes memory _sig) internal returns (bool) {
+    function ring_verify(bytes memory _sig) internal returns (bool) {
         bool ok;
 
         // precompile for verify located at address 0x09
