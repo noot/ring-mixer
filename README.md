@@ -1,5 +1,5 @@
 # ring-mixer [wip]
-to eventually be renamed, once I find a good name :)
+this is no longer used, I decided to write everything [tests, cli] in Go. see github.com/noot/ring-go
 
 contracts:
 * RingVerify.sol; this contract runs the ring-verify precompile located at address `0x0000000000000000000000000000000000000009`. see github.com/noot/go-ethereum
