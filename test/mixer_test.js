@@ -1,28 +1,63 @@
 const ethers = require("ethers")
 const Wallet = ethers.Wallet
 const providers = ethers.providers
+const utils = ethers.utils
 const path = require("path")
 const fs = require("fs")
-
+const assert = require("chai").assert
 const deploy = require("../scripts/deploy.js")
 
-const init = async() => {
-	let ringVerify = await deploy.deployRingMixer()
-	let provider = ringVerify.provider
-	let signer = ringVerify.signer
+const pubkeyA = {x: 0, y: 0}
+const pubkeyB = {x: 0, y: 0}
+const pubkeyC = {x: 0, y: 0}
+const pubkeyD = {x: 0, y: 0}
+const pubkeyE = {x: 0, y: 0}
+const pubkeyF = {x: 0, y: 0}
+const pubkeyG = {x: 0, y: 0}
+const pubkeyH = {x: 0, y: 0}
 
-	let abi = new ethers.utils.AbiCoder()
-	let data = "0x0000000000000011679f3feaae53e6e71024f5da0a582d83cff88e1285b922e8f8177fcf1bcd1582c7667fffd24395b00ad2314fea0474e1bfcf639551fc9faa2b5775064af32e1d51e29111a7873c9fb4265533268578672cc677258b3ed52a44c4cdd6470dcb176a98efe0554598f3e731a3d931c93ab2898e171c8170201211fb6504b7daa318788c1cad255d01645df76a15c94b4843ef3cce9c99390f3e3a2fd25d96890171c427a521d57f1b1b1f686ed33fef94653552a1b76d87fc633cefbab4d2b7213c39a882832980e89bda660b82d6b8db738bae38c3442d1631bfac9fa62109f17877a927f7e970e5b455bfde9ac02c11c545987635a8e8075d3ff447f86630ce4cbd0a8abef8da1e5e3ec03549608ab0c3e9f95b77d3ff9c9ca615e4d14ce0775a3150cb41b95661262203812c96b07fc4a1f2e1483d89aabf5611bfc4f12fe4cc436f5ff4eed90f50c0bc08398b8293b1f89057ba52e9ff17f31db659ae6dc673ec95a076c64f10a7ba853441fb0aa0433d10700e3c88eb6beec114c64e5774cd703659e75f984e9512483767350161d96cba4ffa9df904b729e64e483a7d0af7ae8fa8ba4ccae75fdd0c23f38478890b0bfa307507a94354bd74f4ba3c15d906f52de4c0c5eb3fbbbfb8a033bfd32142139708462f525856965f74e978160c42fdf63ee67d49656b2eac6e4b4b6075c8da9c9c4f9f87877e19a9982fe0fe3f7057eaefd8bbafb76790f1f30dde5e4a0c03c18992e116ceeded9791ae5fa686469c089abdafeca4b12d15163bbfe451699f1e1d4016bd7a37ed870c3c3df4505c7b5d38c62cec3f1bf3d01b30b96be41d25febc16d4af06c559e6155ff244c55ec08669a12496ec8239be01cc63b93947946583e8693d14b2eb4bda17a1b8e0381b2f74b7a8aa8f3c6b76f9980a56b12f5b9e9c945c5de90d7fc265241f37fd72d678b15f45e6cf12b26f93643274e2507541dbc1b00898166a9ef5ede9ffad3357992e5595006ab865dfd9ec45264a2248ef5cdd04bbbaafbaa1ffc0d150e106e965bea298128dcd7ac75e6f81bd1f726bf4578f577592294eeaa643b6497982883e1450d9c3068eac73f7e9f136521db8ce351fba4a1739a3cbeb6800172621c862d8ef12104586bc5fd0c9ad23c5f23da32ce99c4daac4112369f84412e0696cbaeb21bb82ae4aa07a77228f54fe1c2fe4e537529157ea47f3a5529348e3fee6794cfc6bea4b6697fe7a517ff4da6afda4dfe8815ed1f500bfa7ced0ec05685935517b3eac9f1b413903d46c19ee9726f2b87d6a61df5f792e3fbccbd65bb2d24241526eab37473bf39f103284dcf46558ceb9f0a30f953a1b34e62e1152392b7f2ff75acf8152c38df723b7fe177358ba7f53909a86ab8a304ffc158d75ae4e805003bd4e38a6b0ef0eec69b6309f73daf92c7fc03ff28f364a86708aa88ac5c0b1d039c7ba09a7c38677e793236181d72d1be8f7ec9b270560e067e7e7564c8d5e6f811bfb781aad05e17ae84742be7e3c484c9e33f30815d9d80496b47e4cb9fe91951c0cc1ea4d6e78a2f51a6483cf5dc30e1a534dc23a6a3a9d141810f68861709a68d8827c09109b966c5492f3a93a39f234f6ac52c8cb6af64f6769c7ef1c6bcd2daebe2caa016923ab9df13556848aaafd72666436c9b0ccc3fccc90f204d9c7591b110e0cdb831af8f1128e003d2ea5e5142b429b43443befae777b3e9f559a7b070a4d17de790f16b1b0ed80d433c2dd7df1cce52c72231d8a4981766068562b6a56fb96a15c1b65d1a62665c1a7af1f53a33e7abfebd61d9ca79d3a9e19c4aa44101314a86b19f90c422d0b65eed0e3417209681e4f93da889eb0547411da7abbae9dc57fc7ee3c6cd4513124feb80087d6603171eaa265b853d7920aa6719b5a618d6848e77121cff4fa45fd362732fb5bf67b85c2e27101c120b7076af75992ada9c23f0aaf4340790cebd342d37c502d03eae752911581d72e7867107145dcea05482b002ea332554ac69cb88674d25993d4ac23297e8306166ef9c133ed88eaf978f219c1eed4670db8048d014cfc0e00aa3685862c34a9a54c7b04d186401896e97a05368ae47889ce1c7c7011b986f8fc16d861b73ca89c31845e50341247d95720e72ef0b651c83f4ec23860a163501daa4c588c15eb1873a53d864dca17d506285ccf8be57b231ba3e196aa262328c1c977bfcd5cd1827e10ba119e7b748a9bcc5992aca3732aea3ad4b5bb706d315d3e7502cea6cdb6e8c35125f0af611fda62953b8d15a681ea9ac74650b06d52cd3b55fa05b97491fe15930fcb53276ebd9e340db017b898981a837e76c68e235fa262e0111caa8d4f5ee37a7e1c50c654fe3a61685d37518537181d00a188b6f28b14c49b1a5d"
+let keystore = path.resolve("./keystore/UTC--2018-05-17T21-58-52.188632298Z--8f9b540b19520f8259115a90e4b4ffaeac642a30")
+let walletJson = fs.readFileSync(keystore, 'utf8')
+let wallet
+let provider = new providers.JsonRpcProvider("http://localhost:8545", "unspecified")
 
-	let tx = await ringV1erify.verify(data)
-	await provider.waitForTransaction(tx.hash)
-	let receipt = await provider.getTransactionReceipt(tx.hash)
-	console.log(receipt)
-	console.log(receipt.logs[0].topics)
-}
+let mixer
 
-//init()
+let size = 3
 
 describe("mixer", () => {
-	
-})
+	before(async() => {
+	    wallet = await Wallet.fromEncryptedJson(walletJson, "password")
+	    wallet = wallet.connect(provider)
+
+	    mixer = await deploy.deployRingMixer(size)
+		assert(mixer.interface !== undefined)
+	})
+
+	it("should have a ring size of 3", async() => {
+		let _size = await mixer.size()
+		assert(_size === 3, "did not set correct ring size")
+	})
+
+	it("should deposit into the mixer using pubkeyA", async() => {
+		let tx = await mixer.deposit(pubkeyA.x, pubkeyA.y, {value: utils.parseEther('0.1')})
+		await provider.waitForTransaction(tx.hash)
+		let receipt = await provider.getTransactionReceipt(tx.hash)
+		assert(receipt.logs.length > 0, "did not deposit into mixer")
+	})
+
+	it("should deposit into the mixer using pubkeyB", async() => {
+		let tx = await mixer.deposit(pubkeyB.x, pubkeyB.y, {value: utils.parseEther('0.1')})
+		await provider.waitForTransaction(tx.hash)
+		let receipt = await provider.getTransactionReceipt(tx.hash)
+		assert(receipt.logs.length > 0, "did not deposit into mixer")
+	})
+
+	it("should deposit into the mixer using pubkeyC", async() => {
+		let tx = await mixer.deposit(pubkeyC.x, pubkeyC.y, {value: utils.parseEther('0.1')})
+		await provider.waitForTransaction(tx.hash)
+		let receipt = await provider.getTransactionReceipt(tx.hash)
+		assert(receipt.logs.length > 0, "did not deposit into mixer")
+		assert(receipt.logs.length === 2, "did not emit DepositsCompleted event")
+	})
+}).timeout(100000)

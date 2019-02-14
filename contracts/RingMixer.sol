@@ -3,11 +3,11 @@ pragma solidity ^0.5.0;
 import "./EC.sol";
 
 contract RingMixer {
-	// constant ring size
-	uint8 constant public SIZE = 11;
+	// ring size
+	uint8 public size;
 
 	// constant signature length
-	uint8 constant public SIGLEN = 32 * (SIZE * 3 + 2) + 8;
+	uint8 public SIGLEN;
 
 	// constant ether value
 	uint256 constant public VAL = 0.1 ether;
@@ -38,6 +38,17 @@ contract RingMixer {
 	event RoundFinished();
     event Verify(bool indexed ok);
 
+    // optionally pass in ring size
+    // if no size passed, set size to 11
+    constructor(uint8 _size) public {
+    	if (_size == 0) {
+    		size = 11;
+    	} else  {
+    		size = _size;
+    	}
+    	SIGLEN = 32 * (size * 3 + 2) + 8;
+    }
+
 	// round one: ring formation.
 	// sender submits their public key to the contract, as well as 0.1 ether.
 	// once the ring size is reached, the RingFormed event is emitted
@@ -45,13 +56,15 @@ contract RingMixer {
 	function deposit(uint256 _x, uint256 _y) public payable {
 		require(msg.value == VAL);
 		require(_on_curve(_x, _y));
-		require(ring.length < SIZE);
+		require(ring.length < size);
+		// note: do we need to check for duplicate public keys getting submitted? does it reduce anonymity to have
+		// the same person included at two points of the ring?
 
 		PublicKey memory p = PublicKey(_x, _y, msg.sender);
 		ring.push(p);
 		emit PublicKeySubmission(msg.sender, _x, _y);
 
-		if(ring.length == SIZE) {
+		if(ring.length == size) {
 			emit DepositsCompleted();
 		}
 	}
@@ -62,13 +75,13 @@ contract RingMixer {
 	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
 	function withdraw(address payable _to, bytes memory _sig) public returns (bool ok) {
 		require(_sig.length == SIGLEN);
-		require(sigs.length < SIZE);
+		require(sigs.length < size);
 		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
 		// the ring stored in the contract
 
 		// instead of storing the entire signature, we can just store the key image stored inside _sig
 		sigs.push(_sig);
-		if (sigs.length == SIZE) {
+		if (sigs.length == size) {
 			emit WithdrawalsCompleted();
 		}
 
@@ -98,7 +111,7 @@ contract RingMixer {
 
 	// called when all the transactions for this round have been sent and the sigs array is empty
 	function finish_round() internal returns (bool) {
-		for(uint8 i; i < SIZE; i++) {
+		for(uint8 i; i < size; i++) {
 			// make sure the signature is deleted and the transaction has been sent
 			require(sigs[i].length == 0);
 			delete ring[i];
