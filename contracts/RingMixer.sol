@@ -53,12 +53,20 @@ contract RingMixer {
 	// sender submits their public key to the contract, as well as 0.1 ether.
 	// once the ring size is reached, the RingFormed event is emitted
 	// called by the sender
-	function deposit(uint256 _x, uint256 _y) public payable {
+	function deposit(bytes memory _pubkey) public payable {
 		require(msg.value == VAL);
-		require(_on_curve(_x, _y));
+		//require(_on_curve(_x, _y));
 		require(ring.length < size);
 		// note: do we need to check for duplicate public keys getting submitted? does it reduce anonymity to have
 		// the same person included at two points of the ring?
+
+		uint256 _x;
+		uint256 _y;
+
+		assembly {
+			_x := mload(_pubkey)
+			_y := mload(add(_pubkey, 32))
+		}
 
 		PublicKey memory p = PublicKey(_x, _y, msg.sender);
 		ring.push(p);
@@ -74,18 +82,19 @@ contract RingMixer {
 	// to _to.
 	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
 	function withdraw(address payable _to, bytes memory _sig) public returns (bool ok) {
-		require(_sig.length == SIGLEN);
-		require(sigs.length < size);
-		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
-		// the ring stored in the contract
+		// require(_sig.length == SIGLEN);
+		// require(sigs.length < size);
+		// // todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
+		// // the ring stored in the contract
 
-		// instead of storing the entire signature, we can just store the key image stored inside _sig
+		// TODO: instead of storing the entire signature, we can just store the key image stored inside _sig
 		sigs.push(_sig);
 		if (sigs.length == size) {
 			emit WithdrawalsCompleted();
 		}
 
-		// require(!link(image, previous_images))
+		// // TODO: link to previously submitted signatures
+		// // require(!link(image, previous_images))
 
 		bytes32 _msg = keccak256(abi.encodePacked(_to));
 		bytes32 sig_msg;
@@ -96,11 +105,11 @@ contract RingMixer {
 		}
 
 		// require that the signature actually signs the correct address
-		require(sig_msg == _msg);
+		//require(sig_msg == _msg);
 
 		// call ring_verify to verify the signature
 		// if it returns true, transfer the ether
-		if(ring_verify(_sig)) {
+		if(ring_verify(_sig) && sig_msg == _msg) {
 			_to.transfer(VAL);
 			emit Transaction(_to, VAL);
 			return true;
@@ -148,7 +157,8 @@ contract RingMixer {
         return ok;
     }
 
-	// todo: checks if the point is on the curve
+	// TODO: checks if the point is on the curve
+	// important, if someone submits a point not on the curve then we cannot create a signature
 	function _on_curve(uint256 _x, uint256 _y) pure internal returns (bool) {
 		// uint256 sqred = mulmod(_x, _x, ORDER);
 		// uint256 cubed = mulmod(sqred, _x, ORDER);
