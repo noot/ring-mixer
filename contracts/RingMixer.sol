@@ -83,15 +83,9 @@ contract RingMixer {
 	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
 	function withdraw(address payable _to, bytes memory _sig) public returns (bool ok) {
 		// require(_sig.length == SIGLEN);
-		// require(sigs.length < size);
+		 require(sigs.length < size);
 		// // todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
 		// // the ring stored in the contract
-
-		// TODO: instead of storing the entire signature, we can just store the key image stored inside _sig
-		sigs.push(_sig);
-		if (sigs.length == size) {
-			emit WithdrawalsCompleted();
-		}
 
 		// // TODO: link to previously submitted signatures
 		// // require(!link(image, previous_images))
@@ -104,14 +98,17 @@ contract RingMixer {
 			sig_msg := mload(add(_sig, 0x08))
 		}
 
-		// require that the signature actually signs the correct address
-		//require(sig_msg == _msg);
-
 		// call ring_verify to verify the signature
 		// if it returns true, transfer the ether
 		if(ring_verify(_sig) && sig_msg == _msg) {
 			_to.transfer(VAL);
 			emit Transaction(_to, VAL);
+
+			// TODO: instead of storing the entire signature, we can just store the key image stored inside _sig
+			sigs.push(_sig);
+			if (sigs.length == size) {
+				emit WithdrawalsCompleted();
+			}
 			return true;
 		}
 

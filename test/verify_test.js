@@ -34,7 +34,6 @@ describe("ring verify", () => {
 		await provider.waitForTransaction(tx.hash)
 		let receipt = await provider.getTransactionReceipt(tx.hash)
 		assert(receipt.logs.length > 0)
-		console.log(receipt.logs[0])
 		assert(parseInt(receipt.logs[0].topics[1].slice(2)) === 1)
 	})
 
