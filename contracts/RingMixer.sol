@@ -7,7 +7,7 @@ contract RingMixer {
 	uint8 public size;
 
 	// constant signature length
-	uint8 public SIGLEN;
+	//uint8 public SIGLEN;
 
 	// constant ether value
 	uint256 constant public VAL = 0.1 ether;
@@ -22,14 +22,14 @@ contract RingMixer {
 	struct PublicKey {
 		uint256 X;
 		uint256 Y;
-		address _addr;
+		//address _addr;
 	}
 
 	// array of public keys which are used to form a ring
-	PublicKey[] ring;
+	PublicKey[] public ring;
 
-	// array of hashes of already submitted signatures for the current ring
-	bytes[] public sigs;
+	// array of hashes of already submitted key images for the current ring
+	PublicKey[] public images;
 
 	event PublicKeySubmission(address _addr, uint256 _x, uint256 _y);
 	event DepositsCompleted();
@@ -46,7 +46,7 @@ contract RingMixer {
     	} else  {
     		size = _size;
     	}
-    	SIGLEN = 32 * (size * 3 + 2) + 8;
+    	//SIGLEN = 32 * (size * 3 + 2) + 8;
     }
 
 	// round one: ring formation.
@@ -68,7 +68,7 @@ contract RingMixer {
 			_y := mload(add(_pubkey, 32))
 		}
 
-		PublicKey memory p = PublicKey(_x, _y, msg.sender);
+		PublicKey memory p = PublicKey(_x, _y);
 		ring.push(p);
 		emit PublicKeySubmission(msg.sender, _x, _y);
 
@@ -82,8 +82,7 @@ contract RingMixer {
 	// to _to.
 	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
 	function withdraw(address payable _to, bytes memory _sig) public returns (bool ok) {
-		//require(_sig.length == SIGLEN);
-		require(sigs.length < size);
+		require(images.length < size);
 		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
 		// the ring stored in the contract
 
@@ -98,15 +97,27 @@ contract RingMixer {
 			sig_addr := mload(add(_sig, 0x28))
 		}
 
+		uint256 siglen = _sig.length;
+		PublicKey memory image;
+		uint256 ix;
+		uint256 iy;
+		assembly {
+			// sig[siglen-64:siglen] is key image
+			ix := mload(add(_sig, sub(siglen, 64)))
+			iy := mload(add(_sig, sub(siglen, 32)))
+		}
+
+		image.X = ix;
+		image.Y = iy;
+
 		// call ring_verify to verify the signature
 		// if it returns true, transfer the ether
 		if(address(sig_addr) == _to) {
 			_to.transfer(VAL);
 			emit Transaction(_to, VAL);
 
-			// TODO: instead of storing the entire signature, we can just store the key image stored inside _sig
-			sigs.push(_sig);
-			if (sigs.length == size) {
+			images.push(image);
+			if (images.length == size) {
 				emit WithdrawalsCompleted();
 			}
 			return true;
@@ -118,8 +129,7 @@ contract RingMixer {
 	// called when all the transactions for this round have been sent and the sigs array is empty
 	function finish_round() internal returns (bool) {
 		for(uint8 i; i < size; i++) {
-			// make sure the signature is deleted and the transaction has been sent
-			require(sigs[i].length == 0);
+			delete images[i];
 			delete ring[i];
 		}
 		emit RoundFinished();
