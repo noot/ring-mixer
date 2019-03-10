@@ -29,7 +29,8 @@ contract RingMixer {
 	PublicKey[] public ring;
 
 	// array of hashes of already submitted key images for the current ring
-	PublicKey[] public images;
+	bytes32[] public images;
+	mapping(bytes32 => bool) image_used;
 
 	event PublicKeySubmission(address _addr, uint256 _x, uint256 _y);
 	event DepositsCompleted();
@@ -47,6 +48,10 @@ contract RingMixer {
     		size = _size;
     	}
     	//SIGLEN = 32 * (size * 3 + 2) + 8;
+    }
+
+    function images_len() public view returns (uint256) {
+    	return images.length;
     }
 
 	// round one: ring formation.
@@ -86,9 +91,6 @@ contract RingMixer {
 		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
 		// the ring stored in the contract
 
-		// TODO: link to previously submitted signatures
-		// require(!link(image, previous_images))
-
 		require(ring_verify(_sig));
 
 		bytes20 sig_addr;
@@ -97,18 +99,15 @@ contract RingMixer {
 			sig_addr := mload(add(_sig, 0x28))
 		}
 
+		// save key image, only need to save image.X since it's a point on the curve
 		uint256 siglen = _sig.length;
-		PublicKey memory image;
-		uint256 ix;
-		uint256 iy;
+		bytes32 ix;
 		assembly {
 			// sig[siglen-64:siglen] is key image
 			ix := mload(add(_sig, sub(siglen, 64)))
-			iy := mload(add(_sig, sub(siglen, 32)))
 		}
 
-		image.X = ix;
-		image.Y = iy;
+		require(!image_used[ix]);
 
 		// call ring_verify to verify the signature
 		// if it returns true, transfer the ether
@@ -116,7 +115,8 @@ contract RingMixer {
 			_to.transfer(VAL);
 			emit Transaction(_to, VAL);
 
-			images.push(image);
+			images.push(ix);
+			image_used[ix] = true;
 			if (images.length == size) {
 				emit WithdrawalsCompleted();
 			}
@@ -128,7 +128,9 @@ contract RingMixer {
 
 	// called when all the transactions for this round have been sent and the sigs array is empty
 	function finish_round() internal returns (bool) {
+		require(images.length == size);
 		for(uint8 i; i < size; i++) {
+			delete image_used[images[i]];
 			delete images[i];
 			delete ring[i];
 		}
