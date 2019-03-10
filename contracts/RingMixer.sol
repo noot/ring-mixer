@@ -88,8 +88,8 @@ contract RingMixer {
 	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
 	function withdraw(address payable _to, bytes memory _sig) public returns (bool ok) {
 		require(images.length < size);
-		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
-		// the ring stored in the contract
+		// todo: check that the ring in the signature is in fact the ring stored in the contract
+		// it won't mess up the withdraw if it's not, but will reduce anonymity
 
 		require(ring_verify(_sig));
 
@@ -127,7 +127,7 @@ contract RingMixer {
 	} 
 
 	// called when all the transactions for this round have been sent and the sigs array is empty
-	function finish_round() internal returns (bool) {
+	function finish_round() public returns (bool) {
 		require(images.length == size);
 		for(uint8 i; i < size; i++) {
 			delete image_used[images[i]];
@@ -161,7 +161,7 @@ contract RingMixer {
             ok := mload(x)
             mstore(0x40, add(x,0x20)) // update free memory pointer
         }
-        //emit Verify(ok);
+
         return ok;
     }
 
