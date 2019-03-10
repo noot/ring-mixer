@@ -33,7 +33,7 @@ contract RingMixer {
 
 	event PublicKeySubmission(address _addr, uint256 _x, uint256 _y);
 	event DepositsCompleted();
-	event Transaction(address indexed _to, uint256 _value);
+	event Transaction(address indexed _to, uint256 indexed _value);
 	event WithdrawalsCompleted();
 	event RoundFinished();
     event Verify(bool indexed ok);
@@ -82,25 +82,25 @@ contract RingMixer {
 	// to _to.
 	// usually called by the receiver; can actually be called by anyone, assuming they know the _to address and the value.
 	function withdraw(address payable _to, bytes memory _sig) public returns (bool ok) {
-		// require(_sig.length == SIGLEN);
-		 require(sigs.length < size);
-		// // todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
-		// // the ring stored in the contract
+		//require(_sig.length == SIGLEN);
+		require(sigs.length < size);
+		// todo: add checks to make sure signature was formatted correctly, and that the ring in the signature is in fact 
+		// the ring stored in the contract
 
-		// // TODO: link to previously submitted signatures
-		// // require(!link(image, previous_images))
+		// TODO: link to previously submitted signatures
+		// require(!link(image, previous_images))
 
-		bytes32 _msg = keccak256(abi.encodePacked(_to));
-		bytes32 sig_msg;
+		require(ring_verify(_sig));
 
+		bytes20 sig_addr;
 		assembly {
 			// sig[8:40] is the message
-			sig_msg := mload(add(_sig, 0x08))
+			sig_addr := mload(add(_sig, 0x28))
 		}
 
 		// call ring_verify to verify the signature
 		// if it returns true, transfer the ether
-		if(ring_verify(_sig) && sig_msg == _msg) {
+		if(address(sig_addr) == _to) {
 			_to.transfer(VAL);
 			emit Transaction(_to, VAL);
 
@@ -149,8 +149,7 @@ contract RingMixer {
             ok := mload(x)
             mstore(0x40, add(x,0x20)) // update free memory pointer
         }
-
-        emit Verify(ok);
+        //emit Verify(ok);
         return ok;
     }
 
