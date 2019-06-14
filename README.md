@@ -1,5 +1,5 @@
-# ring-mixer [wip]
-this repo is the home of the javascript extensions to my linkable ring signature mixer, see github.com/noot/ring-go. this repo includes tests and (soon to come) a javascript cli.
+# ring-mixer
+this repo is the home of the my linkable ring signature mixer. also see github.com/noot/ring-go.
 
 contracts:
 * RingVerify.sol; this contract runs the ring-verify precompile located at address `0x0000000000000000000000000000000000000009`. see github.com/noot/go-ethereum
